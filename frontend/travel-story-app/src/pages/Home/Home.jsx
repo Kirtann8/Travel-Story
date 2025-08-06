@@ -22,11 +22,10 @@ const Home = () => {
 
   const [userInfo, setUserInfo] = useState(null);
   const [allStories, setAllStories] = useState([]);
-
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState("");
-
   const [dateRange, setDateRange] = useState({ form: null, to: null });
+  const [showCalendar, setShowCalendar] = useState(false);
 
   const [openAddEditModal, setOpenAddEditModal] = useState({
     isShown: false,
@@ -198,7 +197,7 @@ const Home = () => {
         handleClearSearch={handleClearSearch}
       />
 
-      <div className="container mx-auto py-10">
+      <div className="container mx-auto px-4 py-6 lg:py-10">
         <FilterInfoTitle
           filterType={filterType}
           filterDates={dateRange}
@@ -207,10 +206,33 @@ const Home = () => {
           }}
         />
 
-        <div className="flex gap-7">
-          <div className="flex-1">
+        <div className="lg:hidden mb-4">
+          <button
+            onClick={() => setShowCalendar(!showCalendar)}
+            className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-medium"
+          >
+            {showCalendar ? "Hide Calendar" : "Show Calendar"}
+          </button>
+        </div>
+
+        <div className="flex flex-col lg:flex-row gap-6">
+          <div className={`w-full lg:w-[350px] order-1 lg:order-2 ${showCalendar ? 'block' : 'hidden lg:block'}`}>
+            <div className="bg-white border border-slate-200 shadow-lg shadow-slate-200/60 rounded-lg lg:sticky lg:top-24">
+              <div className="p-3">
+                <DayPicker
+                  captionLayout="dropdown-buttons"
+                  mode="range"
+                  selected={dateRange}
+                  onSelect={handleDayClick}
+                  pagedNavigation
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex-1 order-2 lg:order-1">
             {allStories.length > 0 ? (
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">
                 {allStories.map((item) => {
                   return (
                     <TravelStoryCard
@@ -233,20 +255,6 @@ const Home = () => {
                 message={getEmptyCardMessage(filterType)}
               />
             )}
-          </div>
-
-          <div className="w-[350px]">
-            <div className="bg-white border border-slate-200 shadow-lg shadow-slate-200/60 rounded-lg">
-              <div className="p-3">
-                <DayPicker
-                  captionLayout="dropdown-buttons"
-                  mode="range"
-                  selected={dateRange}
-                  onSelect={handleDayClick}
-                  pagedNavigation
-                />
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -303,12 +311,12 @@ const Home = () => {
       </Modal>
 
       <button
-        className="w-16 h-16 flex items-center justify-center rounded-full bg-primary hover:bg-cyan-400 fixed right-10 bottom-10"
+        className="w-14 h-14 lg:w-16 lg:h-16 flex items-center justify-center rounded-full bg-primary hover:bg-cyan-400 fixed right-4 bottom-4 lg:right-10 lg:bottom-10 shadow-lg z-50"
         onClick={() => {
           setOpenAddEditModal({ isShown: true, type: "add", data: null });
         }}
       >
-        <MdAdd className="text-[32px] text-white" />
+        <MdAdd className="text-[28px] lg:text-[32px] text-white" />
       </button>
 
       <ToastContainer />

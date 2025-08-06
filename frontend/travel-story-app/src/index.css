@@ -5,10 +5,113 @@
 @tailwind utilities;
 
 .rdp-root {
-  --rdp-accent-color: #01b0cb; /* Change the accent color to indigo. */
-  --rdp-accent-background-color: #dffbff; /* Change the accent background color. */
+  --rdp-accent-color: #01b0cb;
+  --rdp-accent-background-color: #dffbff;
   --rdp-day_button-border-radius: 8px;
   --rdp-selected-font: bold medium var(--rdp-font-family);
+  font-size: 14px;
+}
+
+.rdp-month {
+  width: 100%;
+}
+
+.rdp-caption {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  margin-bottom: 0.5rem;
+}
+
+.rdp-caption_label {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.rdp-nav {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.rdp-button_previous,
+.rdp-button_next {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background: white;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.rdp-button_previous:hover,
+.rdp-button_next:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.rdp-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.rdp-head_cell {
+  font-size: 12px;
+  font-weight: 500;
+  color: #64748b;
+  text-align: center;
+  padding: 0.5rem 0;
+}
+
+.rdp-day_button {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: #1e293b;
+  font-size: 14px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rdp-day_button:hover {
+  background: #f1f5f9;
+}
+
+.rdp-day_selected {
+  background: #01b0cb !important;
+  color: white !important;
+}
+
+.rdp-day_range_start,
+.rdp-day_range_end {
+  background: #01b0cb !important;
+  color: white !important;
+}
+
+.rdp-day_range_middle {
+  background: #dffbff !important;
+  color: #01b0cb !important;
+}
+
+.rdp-day_today {
+  font-weight: 600;
+  color: #01b0cb;
+}
+
+.rdp-day_outside {
+  color: #cbd5e1;
 }
 
 @layer base {
@@ -37,6 +140,40 @@
   background-color: rgb(172, 201, 229); /* Change this to your desired color */
 }
 
+/* Mobile-specific styles */
+@media (max-width: 640px) {
+  .container {
+    @apply px-4;
+  }
+  
+  .rdp-root {
+    font-size: 13px;
+  }
+  
+  .rdp-day_button {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 13px;
+  }
+  
+  .rdp-caption_label {
+    font-size: 15px;
+  }
+  
+  .rdp-button_previous,
+  .rdp-button_next {
+    width: 28px;
+    height: 28px;
+  }
+}
+
+/* Tablet-specific styles */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .container {
+    @apply px-6;
+  }
+}
+
 @layer components {
   .input-box {
     @apply w-full text-sm bg-cyan-600/5 rounded px-5 py-3 mb-4 outline-none;
@@ -55,7 +192,7 @@
   }
 
   .model-box {
-    @apply w-[80vw] md:w-[40%] h-[80vh] bg-white rounded-lg mx-auto mt-14 p-5 overflow-y-scroll scrollbar z-50;
+    @apply w-[95vw] sm:w-[85vw] md:w-[70vw] lg:w-[50vw] xl:w-[40vw] max-h-[90vh] bg-white rounded-lg mx-auto mt-4 sm:mt-8 lg:mt-14 p-4 sm:p-5 overflow-y-scroll scrollbar z-50;
   }
 
   .icon-btn {
