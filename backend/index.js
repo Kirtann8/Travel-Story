@@ -9,13 +9,22 @@ const jwt = require("jsonwebtoken");
 const upload = require("./multer");
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
+const { sendVerificationEmail, sendPasswordResetEmail } = require("./services/emailService");
 
 const { authenticateToken } = require("./utilities");
 
 const User = require("./models/user.model");
 const TravelStory = require("./models/travelStory.model");
 
-mongoose.connect(config.connectionString);
+mongoose.connect(config.connectionString)
+  .then(() => {
+    console.log('✅ Database connected successfully');
+  })
+  .catch((error) => {
+    console.log('❌ Database connection failed:', error.message);
+    process.exit(1);
+  });
 
 const app = express();
 app.use(express.json());
@@ -39,29 +48,190 @@ app.post("/create-account", async (req, res) => {
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
+  const emailVerificationToken = crypto.randomBytes(32).toString('hex');
 
   const user = new User({
     fullName,
     email,
     password: hashedPassword,
+    emailVerificationToken,
+    isEmailVerified: false,
   });
 
   await user.save();
 
-  const accessToken = jwt.sign(
-    { userId: user._id },
-    process.env.ACCESS_TOKEN_SECRET,
-    {
-      expiresIn: "72h",
-    }
-  );
+  try {
+    await sendVerificationEmail(email, emailVerificationToken, fullName);
+    return res.status(201).json({
+      error: false,
+      message: "Registration successful! Please check your email to verify your account.",
+    });
+  } catch (emailError) {
+    console.log("Email sending failed:", emailError.message);
+    return res.status(201).json({
+      error: false,
+      message: "Registration successful! However, verification email could not be sent. Please contact support.",
+      verificationToken: emailVerificationToken,
+    });
+  }
+});
 
-  return res.status(201).json({
-    error: false,
-    user: { fullName: user.fullName, email: user.email },
-    accessToken,
-    message: "Registration Successful",
+// Forgot Password
+app.post("/forgot-password", async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ error: true, message: "Email is required" });
+  }
+
+  const user = await User.findOne({ email });
+  if (!user) {
+    return res.status(400).json({ error: true, message: "User not found" });
+  }
+
+  // Clear any existing reset tokens to ensure only one active token per user
+  user.resetPasswordToken = undefined;
+  user.resetPasswordExpires = undefined;
+  await user.save();
+
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  const expirationTime = Date.now() + 3600000; // 1 hour
+  user.resetPasswordToken = resetToken;
+  user.resetPasswordExpires = expirationTime;
+  await user.save();
+  
+  console.log("Reset token generated:", resetToken.substring(0, 8) + "...");
+  console.log("Full token:", resetToken);
+  console.log("Token length:", resetToken.length);
+  console.log("Token expires at:", new Date(expirationTime));
+
+  try {
+    await sendPasswordResetEmail(email, resetToken, user.fullName);
+    return res.json({
+      error: false,
+      message: "Password reset link sent to your email!",
+    });
+  } catch (emailError) {
+    console.log("Email sending failed:", emailError.message);
+    return res.json({
+      error: false,
+      message: "Password reset link generated but email could not be sent. Please contact support.",
+      resetToken: resetToken,
+    });
+  }
+});
+
+// Reset Password
+app.post("/reset-password", async (req, res) => {
+  const { token, password } = req.body;
+
+  console.log("Reset password request received:", {
+    token: token ? token.substring(0, 8) + "..." : "null",
+    password: password ? "present" : "missing"
   });
+
+  if (!token || !password) {
+    return res.status(400).json({ error: true, message: "Token and password are required" });
+  }
+
+  try {
+    // Trim whitespace and handle potential URL encoding
+    let cleanToken = token.trim();
+    
+    // Try decoding if it looks like it might be URL encoded
+    try {
+      const decodedToken = decodeURIComponent(cleanToken);
+      if (decodedToken !== cleanToken) {
+        console.log("Token appears to be URL encoded, using decoded version");
+        cleanToken = decodedToken;
+      }
+    } catch (e) {
+      // If decoding fails, use original token
+      console.log("Token decoding failed, using original");
+    }
+    
+    console.log("Looking for user with token:", cleanToken.substring(0, 8) + "...");
+    
+    const user = await User.findOne({ resetPasswordToken: cleanToken });
+    
+    if (!user) {
+      console.log("No user found with provided token");
+      // Let's also search for any users with reset tokens for debugging
+      const usersWithTokens = await User.find({ resetPasswordToken: { $exists: true, $ne: null } });
+      console.log("Users with reset tokens:", usersWithTokens.length);
+      if (usersWithTokens.length > 0) {
+        console.log("First user token starts with:", usersWithTokens[0].resetPasswordToken.substring(0, 8) + "...");
+        console.log("Token expires at:", new Date(usersWithTokens[0].resetPasswordExpires));
+      }
+      return res.status(400).json({ 
+        error: true, 
+        message: "Invalid or expired reset token. Please request a new password reset link." 
+      });
+    }
+
+    console.log("User found, checking token expiry");
+    console.log("Token expires at:", new Date(user.resetPasswordExpires));
+    console.log("Current time:", new Date());
+
+    if (user.resetPasswordExpires < Date.now()) {
+      console.log("Token has expired");
+      // Clear the expired token
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpires = undefined;
+      await user.save();
+      return res.status(400).json({ 
+        error: true, 
+        message: "Reset token has expired. Please request a new password reset link." 
+      });
+    }
+
+    console.log("Token is valid, updating password");
+    const hashedPassword = await bcrypt.hash(password, 10);
+    user.password = hashedPassword;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+
+    return res.json({
+      error: false,
+      message: "Password reset successful",
+    });
+  } catch (error) {
+    return res.status(500).json({ error: true, message: "Server error" });
+  }
+});
+
+// Verify Email
+app.post("/verify-email", async (req, res) => {
+  const { token } = req.body;
+  console.log("Verify email request received with token:", token);
+
+  if (!token) {
+    console.log("No token provided");
+    return res.status(400).json({ error: true, message: "Verification token is required" });
+  }
+
+  try {
+    const user = await User.findOne({ emailVerificationToken: token });
+    console.log("User found:", user ? "Yes" : "No");
+    
+    if (!user) {
+      return res.status(400).json({ error: true, message: "Invalid or expired verification token" });
+    }
+
+    user.isEmailVerified = true;
+    user.emailVerificationToken = undefined;
+    await user.save();
+    console.log("Email verified successfully for user:", user.email);
+
+    return res.json({
+      error: false,
+      message: "Email verified successfully! You can now login.",
+    });
+  } catch (error) {
+    console.log("Verification error:", error);
+    return res.status(500).json({ error: true, message: "Server error during verification" });
+  }
 });
 
 // Login
@@ -363,5 +533,9 @@ app.get("/travel-stories/filter", authenticateToken, async (req, res) => {
   }
 });
 
-app.listen(8000);
+const PORT = 8000;
+app.listen(PORT, () => {
+  console.log('🚀 Backend server is running on port', PORT);
+  console.log('📡 Server URL: http://localhost:' + PORT);
+});
 module.exports = app;

@@ -165,12 +165,36 @@
     width: 28px;
     height: 28px;
   }
+  
+  /* Auth page mobile optimizations */
+  .input-box {
+    @apply py-4 text-base;
+  }
+  
+  .btn-primary {
+    @apply py-4 text-base;
+  }
 }
 
 /* Tablet-specific styles */
-@media (min-width: 641px) and (max-width: 1024px) {
+@media (min-width: 641px) and (max-width: 1023px) {
   .container {
     @apply px-6;
+  }
+  
+  .input-box {
+    @apply py-3.5;
+  }
+  
+  .btn-primary {
+    @apply py-3.5;
+  }
+}
+
+/* Large tablet and small desktop */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .login-ui-box {
+    @apply w-60 h-80;
   }
 }
 
@@ -180,7 +204,7 @@
   }
 
   .btn-primary {
-    @apply w-full text-sm font-medium text-white bg-cyan-500 shadow-lg shadow-cyan-200/50 p-[10px] rounded-full my-1 hover:bg-cyan-100 hover:text-primary;
+    @apply w-full text-sm font-medium text-white bg-cyan-500 shadow-lg shadow-cyan-200/50 p-[10px] rounded-full my-1 hover:bg-cyan-100 hover:text-primary disabled:bg-gray-400 disabled:cursor-not-allowed disabled:hover:bg-gray-400 disabled:hover:text-white;
   }
 
   .btn-light {
