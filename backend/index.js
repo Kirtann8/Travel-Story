@@ -10,6 +10,9 @@ const upload = require("./multer");
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
+const session = require("express-session");
+const passport = require("passport");
+const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const { sendVerificationEmail, sendPasswordResetEmail } = require("./services/emailService");
 
 const { authenticateToken } = require("./utilities");
@@ -29,6 +32,98 @@ mongoose.connect(config.connectionString)
 const app = express();
 app.use(express.json());
 app.use(cors({ origin: "*" }));
+
+// Session configuration
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'fallback-secret',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { secure: false } // Set to true in production with HTTPS
+}));
+
+// Passport configuration
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Passport serialization
+passport.serializeUser((user, done) => {
+  done(null, user._id);
+});
+
+passport.deserializeUser(async (id, done) => {
+  try {
+    const user = await User.findById(id);
+    done(null, user);
+  } catch (error) {
+    done(error, null);
+  }
+});
+
+// Google OAuth Strategy
+passport.use(new GoogleStrategy({
+  clientID: process.env.GOOGLE_CLIENT_ID,
+  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+  callbackURL: "/auth/google/callback"
+}, async (accessToken, refreshToken, profile, done) => {
+  try {
+    let user = await User.findOne({ googleId: profile.id });
+    
+    if (user) {
+      return done(null, user);
+    }
+    
+    // Check if user exists with same email
+    user = await User.findOne({ email: profile.emails[0].value });
+    if (user) {
+      // Link Google account to existing user
+      user.googleId = profile.id;
+      user.authProvider = 'google';
+      user.profilePicture = profile.photos[0]?.value;
+      user.isEmailVerified = true;
+      await user.save();
+      return done(null, user);
+    }
+    
+    // Create new user
+    user = new User({
+      fullName: profile.displayName,
+      email: profile.emails[0].value,
+      googleId: profile.id,
+      profilePicture: profile.photos[0]?.value,
+      authProvider: 'google',
+      isEmailVerified: true
+    });
+    
+    await user.save();
+    done(null, user);
+  } catch (error) {
+    done(error, null);
+  }
+}));
+
+// Google OAuth Routes
+app.get('/auth/google',
+  passport.authenticate('google', { scope: ['profile', 'email'] })
+);
+
+app.get('/auth/google/callback',
+  passport.authenticate('google', { failureRedirect: '/login' }),
+  async (req, res) => {
+    try {
+      const user = req.user;
+      const accessToken = jwt.sign(
+        { userId: user._id },
+        process.env.ACCESS_TOKEN_SECRET,
+        { expiresIn: "72h" }
+      );
+      
+      // Redirect to frontend with token
+      res.redirect(`${process.env.FRONTEND_URL}/auth/success?token=${accessToken}`);
+    } catch (error) {
+      res.redirect(`${process.env.FRONTEND_URL}/login?error=auth_failed`);
+    }
+  }
+);
 
 // Create Account
 app.post("/create-account", async (req, res) => {

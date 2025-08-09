@@ -6,6 +6,7 @@ import SignUp from "./pages/Auth/SignUp";
 import ForgotPassword from "./pages/Auth/ForgotPassword";
 import ResetPassword from "./pages/Auth/ResetPassword";
 import EmailVerification from "./pages/Auth/EmailVerification";
+import AuthSuccess from "./pages/Auth/AuthSuccess";
 import Home from "./pages/Home/Home";
 
 
@@ -21,6 +22,7 @@ const App = () => {
           <Route path="/forgot-password" exact element={<ForgotPassword />} />
           <Route path="/reset-password/:token" exact element={<ResetPassword />} />
           <Route path="/verify-email/:token" exact element={<EmailVerification />} />
+          <Route path="/auth/success" exact element={<AuthSuccess />} />
         </Routes>
       </Router>
     </div>

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import PasswordInput from "../../components/Input/PasswordInput";
+import GoogleLoginButton from "../../components/Social/GoogleLoginButton";
 import { useNavigate } from "react-router-dom";
 import { validateEmail } from "../../utils/helper";
 import axiosInstance from "../../utils/axiosInstance";
@@ -145,6 +146,10 @@ const SignUp = () => {
 
               <p className="text-xs text-slate-500 text-center my-4">Or</p>
 
+              <GoogleLoginButton />
+
+              <p className="text-xs text-slate-500 text-center my-4">Or</p>
+
               <button
                 type="button"
                 className="btn-primary btn-light"
@@ -227,6 +232,10 @@ const SignUp = () => {
               <button type="submit" className="btn-primary" disabled={isEmailSent}>
                 {isEmailSent ? "EMAIL SENT" : "CREATE ACCOUNT"}
               </button>
+
+              <p className="text-xs text-slate-500 text-center my-4">Or</p>
+
+              <GoogleLoginButton />
 
               <p className="text-xs text-slate-500 text-center my-4">Or</p>
 
