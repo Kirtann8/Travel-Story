@@ -104,3 +104,6 @@ tmp/
 
 # Config files with sensitive data
 config.json
+
+CNAME
+GOOGLE_OAUTH_SETUP.md
