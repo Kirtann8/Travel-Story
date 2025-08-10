@@ -105,5 +105,8 @@ tmp/
 # Config files with sensitive data
 config.json
 
+# Environment files
+.env.production
+
 CNAME
 GOOGLE_OAUTH_SETUP.md
