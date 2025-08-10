@@ -388,7 +388,7 @@ app.post("/image-upload", upload.single("image"), async (req, res) => {
         .json({ error: true, message: "No image uploaded" });
     }
 
-    const imageUrl = `http://localhost:8000/uploads/${req.file.filename}`;
+    const imageUrl = `https://travel-story-frontend-gilt.vercel.app/uploads/${req.file.filename}`;
 
     res.status(200).json({ imageUrl });
   } catch (error) {
@@ -505,7 +505,7 @@ app.put("/edit-story/:id", authenticateToken, async (req, res) => {
         .json({ error: true, message: "Travel story not found" });
     }
 
-    const placeholderImgUrl = `http://localhost:8000/assets/placeholder.png`;
+    const placeholderImgUrl = `https://travel-story-frontend-gilt.vercel.app/assets/placeholder.png`;
 
     travelStory.title = title;
     travelStory.story = story;
@@ -689,6 +689,6 @@ app.use("/analytics", require("./routes/analytics"));
 const PORT = 8000;
 app.listen(PORT, () => {
   console.log('🚀 Backend server is running on port', PORT);
-  console.log('📡 Server URL: http://localhost:' + PORT);
+  console.log('📡 Server URL: https://travel-story-frontend-gilt.vercel.app/');
 });
 module.exports = app;

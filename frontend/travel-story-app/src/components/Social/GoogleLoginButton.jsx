@@ -1,8 +1,7 @@
-import React from 'react';
 
-const GoogleLoginButton = ({ onGoogleLogin }) => {
+const GoogleLoginButton = () => {
   const handleGoogleLogin = () => {
-    window.location.href = 'http://localhost:8000/auth/google';
+    window.location.href = 'https://travel-story-frontend-gilt.vercel.app/auth/google';
   };
 
   return (
