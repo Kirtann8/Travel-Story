@@ -671,8 +671,16 @@ app.post('/generate-titles', authenticateToken, async (req, res) => {
 
 app.post('/travel-assistant', authenticateToken, async (req, res) => {
   const { question } = req.body;
-  const answer = await travelAssistant(question || 'Hello');
-  res.json({ answer });
+  const { userId } = req.user;
+  
+  try {
+    const userStories = await TravelStory.find({ userId }).select('visitedLocation title');
+    const answer = await travelAssistant(question || 'Hello', userStories);
+    res.json({ answer });
+  } catch (error) {
+    const answer = await travelAssistant(question || 'Hello');
+    res.json({ answer });
+  }
 });
 
 // Analytics routes

@@ -8,7 +8,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 const enhanceStory = async (story) => {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     
     const prompt = `Enhance this travel story by improving the writing style, adding vivid descriptions, and making it more engaging while keeping the original meaning and facts. Keep it concise and travel-focused:
 
@@ -26,7 +26,7 @@ Enhanced version:`;
 
 const generateTitle = async (story, locations) => {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     
     const locationText = locations && locations.length > 0 ? locations.join(', ') : '';
     
@@ -45,13 +45,22 @@ Provide exactly 3 titles, one per line, without numbering or bullets:`;
   }
 };
 
-const travelAssistant = async (question) => {
+const travelAssistant = async (question, userStories = []) => {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-    const result = await model.generateContent(`You are a travel assistant. Answer this travel question: ${question}`);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    
+    let context = "You are a helpful travel assistant. ";
+    if (userStories.length > 0) {
+      const locations = userStories.map(s => s.visitedLocation).join(", ");
+      context += `The user has visited: ${locations}. `;
+    }
+    
+    const prompt = `${context}Answer naturally and conversationally: ${question}`;
+    
+    const result = await model.generateContent(prompt);
     return result.response.text();
   } catch (error) {
-    return "I can help you with travel questions about destinations, attractions, food, and tips. What would you like to know?";
+    return "I'd love to help you plan your next adventure! What destination interests you?";
   }
 };
 

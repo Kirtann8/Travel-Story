@@ -6,7 +6,7 @@ const TravelAssistant = ({ isOpen, onClose }) => {
   const [messages, setMessages] = useState([
     {
       type: 'bot',
-      text: 'Hi! I\'m your travel assistant. Ask me about destinations, travel tips, attractions, food, weather, or anything travel-related!',
+      text: 'Hi! I\'m your personal travel assistant. I can help with destinations, tips, and recommendations based on your travel history. What would you like to explore?',
       timestamp: new Date()
     }
   ]);
