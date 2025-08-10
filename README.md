@@ -16,7 +16,7 @@ A full-stack travel journal app with AI enhancements, analytics, and Google OAut
 ## Quick Start
 
 ### Prerequisites
-- Node.js 16+
+- Node.js 18+
 - MongoDB
 - Google OAuth credentials
 
