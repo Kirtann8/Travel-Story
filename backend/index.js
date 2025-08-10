@@ -432,7 +432,7 @@ app.use("/assets", express.static(path.join(__dirname, "assets")));
 
 // Add Travel Story
 app.post("/add-travel-story", authenticateToken, async (req, res) => {
-  const { title, story, visitedLocation, imageUrl, visitedDate } = req.body;
+  const { title, story, visitedLocation, imageUrl, visitedDate, spending, spendingCategory, tripDuration } = req.body;
   const { userId } = req.user;
 
   // Validate required fields
@@ -453,6 +453,9 @@ app.post("/add-travel-story", authenticateToken, async (req, res) => {
       userId,
       imageUrl,
       visitedDate: parsedVisitedDate,
+      spending: spending || 0,
+      spendingCategory: spendingCategory || "Activities",
+      tripDuration: tripDuration || 1
     });
 
     await travelStory.save();
@@ -479,7 +482,7 @@ app.get("/get-all-stories", authenticateToken, async (req, res) => {
 // Edit Travel Story
 app.put("/edit-story/:id", authenticateToken, async (req, res) => {
   const { id } = req.params;
-  const { title, story, visitedLocation, imageUrl, visitedDate } = req.body;
+  const { title, story, visitedLocation, imageUrl, visitedDate, spending, spendingCategory, tripDuration } = req.body;
   const { userId } = req.user;
 
   // Validate required fields
@@ -509,6 +512,9 @@ app.put("/edit-story/:id", authenticateToken, async (req, res) => {
     travelStory.visitedLocation = visitedLocation;
     travelStory.imageUrl = imageUrl || placeholderImgUrl;
     travelStory.visitedDate = parsedVisitedDate;
+    travelStory.spending = spending || 0;
+    travelStory.spendingCategory = spendingCategory || "Activities";
+    travelStory.tripDuration = tripDuration || 1;
 
     await travelStory.save();
     res.status(200).json({ story: travelStory, message: "Update Successful" });
@@ -627,6 +633,50 @@ app.get("/travel-stories/filter", authenticateToken, async (req, res) => {
     res.status(500).json({ error: true, message: error.message });
   }
 });
+
+// AI Enhancement routes
+const { enhanceStory, generateTitle, travelAssistant } = require('./services/aiService');
+
+app.post('/enhance-story', authenticateToken, async (req, res) => {
+  const { story } = req.body;
+  
+  if (!story) {
+    return res.status(400).json({ error: true, message: 'Story content is required' });
+  }
+  
+  try {
+    const enhancedStory = await enhanceStory(story);
+    res.json({ enhancedStory });
+  } catch (error) {
+    console.error('Enhance story error:', error);
+    res.status(500).json({ error: true, message: error.message });
+  }
+});
+
+app.post('/generate-titles', authenticateToken, async (req, res) => {
+  const { story, locations } = req.body;
+  
+  if (!story) {
+    return res.status(400).json({ error: true, message: 'Story content is required' });
+  }
+  
+  try {
+    const titles = await generateTitle(story, locations);
+    res.json({ titles });
+  } catch (error) {
+    console.error('Generate titles error:', error);
+    res.status(500).json({ error: true, message: error.message });
+  }
+});
+
+app.post('/travel-assistant', authenticateToken, async (req, res) => {
+  const { question } = req.body;
+  const answer = await travelAssistant(question || 'Hello');
+  res.json({ answer });
+});
+
+// Analytics routes
+app.use("/analytics", require("./routes/analytics"));
 
 const PORT = 8000;
 app.listen(PORT, () => {

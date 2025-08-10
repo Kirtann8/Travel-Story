@@ -9,7 +9,10 @@ const travelStorySchema = new Schema({
   userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
   createdOn: { type: Date, default: Date.now },
   imageUrl: { type: String, required: true }, 
-  visitedDate: { type: Date, required: true }, 
+  visitedDate: { type: Date, required: true },
+  spending: { type: Number, default: 0 },
+  spendingCategory: { type: String, enum: ["Accommodation", "Food", "Transport", "Activities"], default: "Activities" },
+  tripDuration: { type: Number, default: 1 }
 });
 
 module.exports = mongoose.model("TravelStory", travelStorySchema);

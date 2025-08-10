@@ -8,6 +8,7 @@ import ResetPassword from "./pages/Auth/ResetPassword";
 import EmailVerification from "./pages/Auth/EmailVerification";
 import AuthSuccess from "./pages/Auth/AuthSuccess";
 import Home from "./pages/Home/Home";
+import Dashboard from "./pages/Dashboard/Dashboard";
 
 
 const App = () => {
@@ -17,6 +18,7 @@ const App = () => {
         <Routes>
           <Route path="/" exact element={<Root />} />
           <Route path="/dashboard" exact element={<Home />} />
+          <Route path="/analytics" exact element={<Dashboard />} />
           <Route path="/login" exact element={<Login />} />
           <Route path="/signUp" exact element={<SignUp />} />
           <Route path="/forgot-password" exact element={<ForgotPassword />} />

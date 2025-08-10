@@ -2,9 +2,11 @@ import React, { useEffect, useState } from "react";
 import Navbar from "../../components/Navbar";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "../../utils/axiosInstance";
-import { MdAdd } from "react-icons/md";
+import { MdAdd, MdDashboard, MdViewList, MdChat } from "react-icons/md";
 import Modal from "react-modal";
 import TravelStoryCard from "../../components/Cards/TravelStoryCard";
+import Dashboard from "./Dashboard";
+import TravelAssistant from "../../components/TravelAssistant";
 
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -12,9 +14,6 @@ import AddEditTravelStory from "./AddEditTravelStory";
 import ViewTravelStory from "./ViewTravelStory";
 import EmptyCard from "../../components/Cards/EmptyCard";
 
-import { DayPicker } from "react-day-picker";
-import moment from "moment";
-import FilterInfoTitle from "../../components/Cards/FilterInfoTitle";
 import { getEmptyCardImg, getEmptyCardMessage } from "../../utils/helper";
 
 const Home = () => {
@@ -23,9 +22,7 @@ const Home = () => {
   const [userInfo, setUserInfo] = useState(null);
   const [allStories, setAllStories] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterType, setFilterType] = useState("");
-  const [dateRange, setDateRange] = useState({ form: null, to: null });
-  const [showCalendar, setShowCalendar] = useState(false);
+  const [activeView, setActiveView] = useState("dashboard"); // "dashboard" or "stories"
 
   const [openAddEditModal, setOpenAddEditModal] = useState({
     isShown: false,
@@ -37,6 +34,8 @@ const Home = () => {
     isShown: false,
     data: null,
   });
+
+  const [isTravelAssistantOpen, setIsTravelAssistantOpen] = useState(false);
 
   // Get User Info
   const getUserInfo = async () => {
@@ -92,10 +91,8 @@ const Home = () => {
       if (response.data && response.data.story) {
         toast.success("Story Updated Successfully");
 
-        if (filterType === "search" && searchQuery) {
+        if (searchQuery) {
           onSearchStory(searchQuery);
-        } else if (filterType === "date") {
-          filterStoriesByDate(dateRange);
         } else {
           getAllTravelStories();
         }
@@ -125,66 +122,34 @@ const Home = () => {
 
   //Search Story
   const onSearchStory = async (query) => {
+    if (!query.trim()) {
+      getAllTravelStories();
+      return;
+    }
+    
     try {
       const response = await axiosInstance.get("/search", {
-        params: {
-          query,
-        },
+        params: { query },
       });
 
       if (response.data && response.data.stories) {
-        setFilterType("search");
         setAllStories(response.data.stories);
       }
     } catch (error) {
-      // Handle unexpected errors
-      console.log("An unexpected error occurred. Please try again.");
+      console.log("Search failed. Please try again.");
     }
   };
+
+
 
   const handleClearSearch = () => {
-    setFilterType("");
-    getAllTravelStories();
-  };
-
-  // Handle Filter Travel Story By Date Range
-  const filterStoriesByDate = async (day) => {
-    try {
-      const startDate = day.from ? moment(day.from).valueOf() : null;
-      const endDate = day.to ? moment(day.to).valueOf() : null;
-
-      if (startDate && endDate) {
-        const response = await axiosInstance.get("/travel-stories/filter", {
-          params: { startDate, endDate },
-        });
-
-        if (response.data && response.data.stories) {
-          setFilterType("date");
-          setAllStories(response.data.stories);
-        }
-      }
-    } catch (error) {
-      console.log("An unexpected error occurred. Please try again.");
-    }
-  };
-
-  // Handle Date Range Select
-  const handleDayClick = (day) => {
-    setDateRange(day);
-    filterStoriesByDate(day);
-  };
-
-  const resetFilter = () => {
-    setDateRange({ from: null, to: null });
-    setFilterType("");
+    setSearchQuery("");
     getAllTravelStories();
   };
 
   useEffect(() => {
     getAllTravelStories();
     getUserInfo();
-
-    return () => {};
   }, []);
 
   return (
@@ -197,67 +162,71 @@ const Home = () => {
         handleClearSearch={handleClearSearch}
       />
 
-      <div className="container mx-auto px-4 py-6 lg:py-10">
-        <FilterInfoTitle
-          filterType={filterType}
-          filterDates={dateRange}
-          onClear={() => {
-            resetFilter();
-          }}
-        />
-
-        <div className="lg:hidden mb-4">
+      {/* View Toggle */}
+      <div className="bg-white border-b px-4 py-3">
+        <div className="container mx-auto flex space-x-4">
           <button
-            onClick={() => setShowCalendar(!showCalendar)}
-            className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-medium"
+            onClick={() => setActiveView("dashboard")}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+              activeView === "dashboard"
+                ? "bg-blue-500 text-white"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            }`}
           >
-            {showCalendar ? "Hide Calendar" : "Show Calendar"}
+            <MdDashboard />
+            <span>Dashboard</span>
           </button>
-        </div>
+          <button
+            onClick={() => setActiveView("stories")}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+              activeView === "stories"
+                ? "bg-blue-500 text-white"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            }`}
+          >
+            <MdViewList />
+            <span>Stories</span>
+          </button>
+          <button
+            onClick={() => setIsTravelAssistantOpen(true)}
+            className="flex items-center space-x-2 px-4 py-2 rounded-lg font-medium bg-green-100 text-green-600 hover:bg-green-200 transition-colors"
+          >
+            <MdChat />
+            <span>Travel Assistant</span>
+          </button>
 
-        <div className="flex flex-col lg:flex-row gap-6">
-          <div className={`w-full lg:w-[350px] order-1 lg:order-2 ${showCalendar ? 'block' : 'hidden lg:block'}`}>
-            <div className="bg-white border border-slate-200 shadow-lg shadow-slate-200/60 rounded-lg lg:sticky lg:top-24">
-              <div className="p-3">
-                <DayPicker
-                  captionLayout="dropdown-buttons"
-                  mode="range"
-                  selected={dateRange}
-                  onSelect={handleDayClick}
-                  pagedNavigation
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="flex-1 order-2 lg:order-1">
-            {allStories.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">
-                {allStories.map((item) => {
-                  return (
-                    <TravelStoryCard
-                      key={item._id}
-                      imgUrl={item.imageUrl}
-                      title={item.title}
-                      story={item.story}
-                      date={item.visitedDate}
-                      visitedLocation={item.visitedLocation}
-                      isFavourite={item.isFavourite}
-                      onClick={() => handleViewStory(item)}
-                      onFavouriteClick={() => updateIsFavourite(item)}
-                    />
-                  );
-                })}
-              </div>
-            ) : (
-              <EmptyCard
-                imgSrc={getEmptyCardImg(filterType)}
-                message={getEmptyCardMessage(filterType)}
-              />
-            )}
-          </div>
         </div>
       </div>
+
+      {/* Content */}
+      {activeView === "dashboard" ? (
+        <Dashboard />
+      ) : (
+        <div className="container mx-auto px-4 py-6">
+          {allStories.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {allStories.map((item) => (
+                <TravelStoryCard
+                  key={item._id}
+                  imgUrl={item.imageUrl}
+                  title={item.title}
+                  story={item.story}
+                  date={item.visitedDate}
+                  visitedLocation={item.visitedLocation}
+                  isFavourite={item.isFavourite}
+                  onClick={() => handleViewStory(item)}
+                  onFavouriteClick={() => updateIsFavourite(item)}
+                />
+              ))}
+            </div>
+          ) : (
+            <EmptyCard
+              imgSrc={getEmptyCardImg("search")}
+              message={getEmptyCardMessage("search")}
+            />
+          )}
+        </div>
+      )}
 
       {/* Add & Edit Travel Story Model */}
       <Modal
@@ -310,14 +279,29 @@ const Home = () => {
         />
       </Modal>
 
-      <button
-        className="w-14 h-14 lg:w-16 lg:h-16 flex items-center justify-center rounded-full bg-primary hover:bg-cyan-400 fixed right-4 bottom-4 lg:right-10 lg:bottom-10 shadow-lg z-50"
-        onClick={() => {
-          setOpenAddEditModal({ isShown: true, type: "add", data: null });
-        }}
-      >
-        <MdAdd className="text-[28px] lg:text-[32px] text-white" />
-      </button>
+      {activeView === "stories" && (
+        <>
+          <button
+            className="w-14 h-14 lg:w-16 lg:h-16 flex items-center justify-center rounded-full bg-green-500 hover:bg-green-600 fixed right-4 bottom-24 lg:right-10 lg:bottom-28 shadow-lg z-50"
+            onClick={() => setIsTravelAssistantOpen(true)}
+          >
+            <MdChat className="text-[28px] lg:text-[32px] text-white" />
+          </button>
+          <button
+            className="w-14 h-14 lg:w-16 lg:h-16 flex items-center justify-center rounded-full bg-blue-500 hover:bg-blue-600 fixed right-4 bottom-4 lg:right-10 lg:bottom-10 shadow-lg z-50"
+            onClick={() => {
+              setOpenAddEditModal({ isShown: true, type: "add", data: null });
+            }}
+          >
+            <MdAdd className="text-[28px] lg:text-[32px] text-white" />
+          </button>
+        </>
+      )}
+
+      <TravelAssistant 
+        isOpen={isTravelAssistantOpen}
+        onClose={() => setIsTravelAssistantOpen(false)}
+      />
 
       <ToastContainer />
     </>

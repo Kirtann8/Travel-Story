@@ -2,14 +2,16 @@ import { useState } from "react";
 
 import LOGO from "../assets/images/logo.svg";
 import ProfileInfo from "./Cards/ProfileInfo";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import SearchBar from "./Input/SearchBar";
 import { HiMenu, HiX } from "react-icons/hi";
+import { MdDashboard, MdHome } from "react-icons/md";
 import PropTypes from "prop-types";
 
 const Navbar = ({ userInfo, searchQuery, setSearchQuery, onSearchNote, handleClearSearch }) => {
   const isToken = localStorage.getItem("token");
   const navigate = useNavigate();
+  const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const onLogout = () => {
@@ -34,7 +36,7 @@ const Navbar = ({ userInfo, searchQuery, setSearchQuery, onSearchNote, handleCle
 
       {isToken && (
         <>
-          <div className="hidden md:block">
+          <div className="hidden md:flex items-center space-x-4">
             <SearchBar
               value={searchQuery}
               onChange={({ target }) => {
@@ -43,6 +45,30 @@ const Navbar = ({ userInfo, searchQuery, setSearchQuery, onSearchNote, handleCle
               handleSearch={handleSearch}
               onClearSearch={onClearSearch}
             />
+            <div className="flex space-x-2">
+              <button
+                onClick={() => navigate('/dashboard')}
+                className={`p-2 rounded-lg transition-colors ${
+                  location.pathname === '/dashboard' 
+                    ? 'bg-primary text-white' 
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+                title="Stories"
+              >
+                <MdHome className="text-xl" />
+              </button>
+              <button
+                onClick={() => navigate('/analytics')}
+                className={`p-2 rounded-lg transition-colors ${
+                  location.pathname === '/analytics' 
+                    ? 'bg-primary text-white' 
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+                title="Analytics"
+              >
+                <MdDashboard className="text-xl" />
+              </button>
+            </div>
           </div>
 
           <button
@@ -71,6 +97,30 @@ const Navbar = ({ userInfo, searchQuery, setSearchQuery, onSearchNote, handleCle
                   handleSearch={handleSearch}
                   onClearSearch={onClearSearch}
                 />
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => navigate('/dashboard')}
+                    className={`flex-1 p-3 rounded-lg transition-colors ${
+                      location.pathname === '/dashboard' 
+                        ? 'bg-primary text-white' 
+                        : 'text-gray-600 bg-gray-100'
+                    }`}
+                  >
+                    <MdHome className="text-xl mx-auto" />
+                    <span className="text-sm block mt-1">Stories</span>
+                  </button>
+                  <button
+                    onClick={() => navigate('/analytics')}
+                    className={`flex-1 p-3 rounded-lg transition-colors ${
+                      location.pathname === '/analytics' 
+                        ? 'bg-primary text-white' 
+                        : 'text-gray-600 bg-gray-100'
+                    }`}
+                  >
+                    <MdDashboard className="text-xl mx-auto" />
+                    <span className="text-sm block mt-1">Analytics</span>
+                  </button>
+                </div>
                 <ProfileInfo userInfo={userInfo} onLogout={onLogout} />
               </div>
             </div>
