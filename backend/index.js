@@ -20,7 +20,7 @@ const { authenticateToken } = require("./utilities");
 const User = require("./models/user.model");
 const TravelStory = require("./models/travelStory.model");
 
-mongoose.connect(config.connectionString)
+mongoose.connect(process.env.MONGODB_URI)
   .then(() => {
     console.log('✅ Database connected successfully');
   })
